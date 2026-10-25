@@ -1,6 +1,6 @@
 // Opcional: chave da YouTube Data API v3 (restrinja ao seu site no Google Cloud).
 // Com a chave, o botão "Completa" toca a música inteira pelo YouTube para qualquer pessoa.
-const YT_KEY="";
+const YT_KEY="AIzaSyAoSizOikrlK6gpTU5Yxjxx1t15AGyr59Q";
 // Sem chave, o site procura o vídeo no YouTube por estes serviços públicos (Piped).
 // São não oficiais e podem sair do ar; se um falhar, troque o endereço ou use YT_KEY.
 const PIPED=["https://pipedapi.kavin.rocks","https://pipedapi.adminforge.de","https://api.piped.private.coffee"];
