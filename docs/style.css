@@ -84,7 +84,7 @@ button.row:hover{background:#3b82f622}
 .ppb{width:46px;height:46px;border-radius:50%;padding:0}
 .pm{flex:2 1 220px;display:flex;align-items:center;gap:10px}.pm input{flex:1;margin:0;padding:0;background:none;border:0;accent-color:#22d3ee}.pm span{white-space:nowrap}
 .seg{display:flex;border:1.5px solid var(--line);border-radius:99px;overflow:hidden}.seg button{background:none;border:0;padding:7px 14px;font-weight:700;font-size:13px;cursor:pointer}.seg button[aria-pressed=true]{background:var(--g);color:#03101e}
-@media(max-width:640px){.nav{order:3;width:100%;margin-left:0}.w{padding-top:20px}}
+@media(max-width:1080px){.nav{order:3;width:100%;margin-left:0}.w{padding-top:20px}}
 
 .cv.ph{height:150px;background-size:cover;background-position:center 25%}
 #fp{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(480px,calc(100% - 24px));height:176px;z-index:14;border-radius:14px;overflow:hidden;display:none;border:1.5px solid #2b6cff66;background:#000}
