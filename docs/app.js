@@ -1,6 +1,6 @@
 // Opcional: chave da YouTube Data API v3 (restrinja ao seu site no Google Cloud).
 // Com a chave, o botão "Completa" toca a música inteira pelo YouTube para qualquer pessoa.
-const YT_KEY="";
+const YT_KEY="AIzaSyAoSizOikrlK6gpTU5Yxjxx1t15AGyr59Q";
 const LOGO="logo.webp";
 const G={
 "Rock":[["Queen","Reino Unido",1970,52,"Bohemian Rhapsody|Don't Stop Me Now"],["Foo Fighters","Estados Unidos",1994,20,"Everlong|The Pretender"],["Nirvana","Estados Unidos",1987,28,"Smells Like Teen Spirit|Come as You Are"],["Arctic Monkeys","Reino Unido",2002,30,"Do I Wanna Know?|R U Mine?"],["The Beatles","Reino Unido",1960,35,"Hey Jude|Let It Be"],["Led Zeppelin","Reino Unido",1968,32,"Stairway to Heaven|Whole Lotta Love"],["The Rolling Stones","Reino Unido",1962,22,"Paint It Black|(I Can't Get No) Satisfaction"]],
