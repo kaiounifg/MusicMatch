@@ -1,24 +1,17 @@
 # Site
 https://kaiounifg.github.io/MusicMatch
 ```
-pip freeze > requirements.txt
-```
-
-#MusicMatch
+# MusicMatch
  
-Aplicação desktop para descoberta musical utilizando Inteligência Artificial e integração de APIs
- 
- 
+Aplicação Desktop para Descoberta Musical com Integração de APIs
  
  Descrição
  
-O MusicMatch é uma aplicação desktop desenvolvida em Python com o objetivo de facilitar a descoberta de bandas e músicas a partir dos gêneros musicais escolhidos pelo usuário.
+O MusicMatch é uma aplicação desktop desenvolvida em Python, criada para facilitar a descoberta de bandas e músicas. O usuário seleciona um gênero musical, e o sistema consulta a TheAudioDB para buscar a lista de bandas relacionadas, trazendo fotografias, país de origem, biografia e demais dados dos artistas.
  
-O usuário seleciona um gênero musical e a aplicação utiliza a API do Gemini para gerar uma lista de bandas relacionadas. A partir dessa lista, a TheAudioDB é consultada para obter fotos, gênero, país, biografia e outras informações. Para cada banda, a iTunes Search API retorna músicas e trechos de aproximadamente 30 segundos, que podem ser reproduzidos diretamente no aplicativo.
+Para cada banda encontrada, a aplicação faz uma requisição à iTunes Search API, que retorna as músicas e os trechos de áudio (previews) de aproximadamente 30 segundos, reproduzidos diretamente dentro do programa.
  
-O sistema também conta com um CRUD de usuários, permitindo que diferentes pessoas usem o mesmo computador com perfis independentes — cada usuário mantém seus favoritos, histórico e dados pessoais de forma isolada.
- 
- 
+Também conta com um CRUD de usuários, permitindo que várias pessoas usem o mesmo computador com perfis independentes, cada um com seus favoritos, histórico de buscas e dados pessoais isolados.
  
  Fluxo Principal
  
@@ -28,46 +21,38 @@ Usuário
    ↓
 Login / Perfil
    ↓
-Escolha de gênero
+Escolha do gênero musical
    ↓
-Gemini API → Lista de bandas
-   ↓
-TheAudioDB → Fotos + informações
+TheAudioDB → Lista de bandas, fotos e informações
    ↓
 iTunes Search API → Músicas + previews
    ↓
-Exibição e reprodução
+Exibição dos dados e reprodução dos trechos
  
  
- 
-  Funcionalidades
+ Funcionalidades
  
--  CRUD de usuários — criação, consulta, atualização e exclusão de contas
--  Perfis individuais — dados, favoritos e histórico separados por usuário
--  Descoberta por gênero — lista de bandas sugeridas por IA conforme o estilo escolhido
--  Perfil completo da banda — foto, nome, gênero, país, biografia
--  Pesquisa direta — busca por bandas específicas
--  Reprodução de previews — trechos de ~30s dentro da aplicação
--  Favoritos — salve suas bandas preferidas
--  Histórico — acompanhe o que você já pesquisou
--  Descoberta aleatória — surpreenda-se com uma banda sugerida
--  Comparação de bandas — veja duas bandas lado a lado
--  Estatísticas do gênero — países, décadas e dados das bandas encontradas
+-  CRUD de usuários: criação, consulta, atualização e exclusão de contas
+-  Perfis individuais: favoritos e histórico separados para cada usuário
+-  Descoberta por gênero: busca de bandas pelo estilo musical escolhido
+-  Pesquisa direta: procurar por uma banda específica
+-  Perfil completo da banda: foto, nome, país e biografia
+-  Reprodução de previews: trechos de aproximadamente 30 segundos
+-  Lista de favoritos: salvar bandas preferidas
+-  Histórico de pesquisas: visualizar buscas já realizadas
+-  Descoberta aleatória: exibir uma banda sorteada
+- Comparação de bandas: visualizar duas bandas lado a lado
+-  Estatísticas por gênero: dados sobre países e décadas das bandas encontradas
  
- 
- 
- Tecnologias Utilizadas
+Tecnologias Utilizadas
  
 Tecnologia Finalidade 
 Python Linguagem de desenvolvimento 
-CustomTkinter Interface gráfica moderna 
-Gemini API Geração de sugestões de bandas 
-TheAudioDB API Informações e imagens das bandas 
+CustomTkinter Interface gráfica 
+TheAudioDB API Dados, imagens e lista das bandas 
 iTunes Search API Músicas e trechos de áudio 
-VLC / biblioteca de áudio Reprodução dos previews 
+VLC / Biblioteca de áudio Reprodução dos previews 
 SQLite Banco de dados local (usuários, favoritos, histórico) 
- 
- 
  
 📁 Estrutura Geral
  
@@ -80,8 +65,8 @@ plaintext
          Usuários                APIs
              │                     │
           CRUD              ┌──────┼──────┐
-             │              │      │      │
-        ┌────┴────┐       Gemini  AudioDB iTunes
+             │              │             │
+        ┌────┴────┐    TheAudioDB   iTunes
         │         │
      Perfil A  Perfil B
         │         │
@@ -89,21 +74,16 @@ plaintext
    Histórico   Histórico
  
  
- 
- 
  Objetivo
  
-O MusicMatch alia consumo de APIs, inteligência artificial, gerenciamento de dados com CRUD, banco de dados local, reprodução de mídia e desenvolvimento de interface em uma única aplicação acessível e personalizada, focada em tornar a descoberta de novas bandas mais simples e prazerosa.
- 
- 
+O MusicMatch une integração com APIs, CRUD de usuários, banco de dados local, reprodução de mídia e interface gráfica, criando uma aplicação simples e personalizada para facilitar a descoberta de novas bandas e músicas.
  
  Pré-requisitos
  
 - Python 3.x instalado
-- Chaves de acesso para as APIs utilizadas (Gemini, TheAudioDB, iTunes Search API)
-- Conexão com a internet para busca de dados e reprodução dos previews
+- Chaves de acesso para TheAudioDB e iTunes Search API
+- Conexão com a internet para carregar os dados e reproduzir os previews
  
- 
-  Nota: Este é um projeto acadêmico/educacional. As imagens, informações e trechos de áudio são obtidos de APIs públicas e pertencem aos seus respectivos proprietários.
+ Aviso
  
- 
+Este é um projeto acadêmico/educacional. Todas as imagens, informações e trechos de áudio são obtidos por meio de APIs públicas e pertencem aos seus respectivos proprietários.
