@@ -1,50 +1,45 @@
 """
-MusicMatch - back-end Flask.
+api.py - rotas da API do MusicMatch (tudo que começa com /api).
 
-Rotas que o front (static/app.js) chama:
-  GET    /                    página (templates/index.html)
-  GET    /api/me              usuário logado (401 se ninguém)
-  POST   /api/register        cria conta e já loga
-  POST   /api/login           entra
-  POST   /api/logout          sai
-  PUT    /api/dados           grava gêneros, favoritos, salvos, playlists, histórico e foto
-  PUT    /api/perfil          grava nome, e-mail, bio e (opcional) nova senha
-  DELETE /api/conta           apaga a conta
-  GET    /api/itunes          busca de músicas (iTunes)
-  GET    /api/video           ids de vídeo do YouTube
-  GET    /api/banda/<nome>    dados da banda (TheAudioDB)
+É um Blueprint do Flask: um grupo de rotas que mora neste arquivo e é ligado
+ao app em app.py (app.register_blueprint(api)). As URLs continuam as mesmas.
+Este arquivo é o único que fala com o repositorio.py; o armazenamento
+(PostgreSQL) fica todo lá.
 
-O armazenamento fica TODO em repositorio.py (hoje em memória).
+Rotas:
+  GET    /api/me                 usuário logado (401 se ninguém)
+  POST   /api/register           cria conta e já loga
+  POST   /api/login              entra
+  POST   /api/logout             sai
+  PUT    /api/perfil             grava nome, e-mail, bio e (opcional) nova senha
+  DELETE /api/conta              apaga a conta
+  PUT    /api/dados              grava gêneros, favoritos, salvos, playlists, histórico e foto
+  GET    /api/itunes             busca de músicas (iTunes)
+  GET    /api/video              ids de vídeo do YouTube
+  GET    /api/banda/<nome>       dados da banda (TheAudioDB)
+  POST   /api/visualizacao       soma 1 na contagem de uma faixa
+  GET    /api/mais-escutadas     ranking das faixas mais visualizadas
+
 Erros da API sempre voltam como JSON: {"erro": "mensagem"}.
 """
 import os
 import re
 import threading
+from functools import wraps
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request, session
+from flask import Blueprint, current_app, jsonify, request, session
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
-import repositorio
-from repositorio import EmailJaCadastrado
+import banco
+from banco import EmailJaCadastrado
 
-load_dotenv()  # lê o arquivo .env (chaves de API e SECRET_KEY)
+load_dotenv()  # garante que o .env já foi lido antes de ler as chaves abaixo
 
-app = Flask(__name__)
+api = Blueprint("api", __name__)
 
-# Chave que assina o cookie de sessão. Em produção, defina SECRET_KEY no .env
-# com um valor longo e aleatório. O valor abaixo é só para desenvolvimento.
-CHAVE_PADRAO = "dev-troque-esta-chave"
-app.secret_key = os.environ.get("SECRET_KEY", CHAVE_PADRAO)
-if app.secret_key == CHAVE_PADRAO:
-    app.logger.warning("SECRET_KEY não definida no .env: usando chave de desenvolvimento.")
-
-app.config.update(
-    SESSION_COOKIE_HTTPONLY=True,    # o JavaScript não consegue ler o cookie
-    SESSION_COOKIE_SAMESITE="Lax",   # o navegador não manda o cookie em pedidos de outros sites
-)
 
 YT_KEY = os.environ.get("YT_KEY", "")                 # chave do YouTube (opcional)
 AUDIODB_KEY = os.environ.get("AUDIODB_KEY", "2")      # chave de teste pública da TheAudioDB; confira na documentação deles
@@ -56,7 +51,6 @@ SERVIDORES_PIPED = [                                   # alternativa sem chave (
 
 EMAIL_VALIDO = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
-
 # ---------------------------------------------------------------------
 # Utilitários
 # ---------------------------------------------------------------------
@@ -65,7 +59,7 @@ def erro(mensagem, status):
     return jsonify({"erro": mensagem}), status
 
 
-@app.errorhandler(HTTPException)
+@api.app_errorhandler(HTTPException)
 def erro_http(e):
     """Em /api/..., qualquer erro (404, 405, 500...) volta como JSON em vez de
     uma página HTML. Assim o front sempre consegue ler o {"erro": ...}."""
@@ -85,7 +79,7 @@ def usuario_logado():
     uid = session.get("uid")
     if uid is None:
         return None
-    usuario = repositorio.buscar_por_id(uid)
+    usuario = banco.buscar_por_id(uid)
     if usuario is None:
         session.clear()
     return usuario
@@ -94,8 +88,6 @@ def usuario_logado():
 def login_obrigatorio(funcao):
     """Decorador: responde 401 se não há usuário logado; senão passa o usuário
     como primeiro argumento da rota."""
-    from functools import wraps
-
     @wraps(funcao)
     def interna(*args, **kwargs):
         usuario = usuario_logado()
@@ -141,17 +133,9 @@ def senha_valida(valor):
 
 
 # ---------------------------------------------------------------------
-# Página
-# ---------------------------------------------------------------------
-@app.get("/")
-def pagina_inicial():
-    return render_template("index.html")
-
-
-# ---------------------------------------------------------------------
 # Contas e sessão
 # ---------------------------------------------------------------------
-@app.get("/api/me")
+@api.get("/api/me")
 def me():
     usuario = usuario_logado()
     if usuario is None:
@@ -159,7 +143,7 @@ def me():
     return jsonify(usuario_publico(usuario))
 
 
-@app.post("/api/register")
+@api.post("/api/register")
 def registrar():
     d = corpo_json()
     try:
@@ -169,7 +153,7 @@ def registrar():
     except ValueError as e:
         return erro(str(e), 400)
     try:
-        usuario = repositorio.criar_usuario(nome, email, generate_password_hash(senha))
+        usuario = banco.criar_usuario(nome, email, generate_password_hash(senha))
     except EmailJaCadastrado:
         return erro("Este e-mail já está cadastrado.", 409)
     session.clear()
@@ -177,12 +161,12 @@ def registrar():
     return jsonify(usuario_publico(usuario)), 201
 
 
-@app.post("/api/login")
+@api.post("/api/login")
 def entrar():
     d = corpo_json()
     email = str(d.get("email") or "").strip().lower()
     senha = d.get("pw")
-    usuario = repositorio.buscar_por_email(email)
+    usuario = banco.buscar_por_email(email)
     # Mesma mensagem para e-mail inexistente e senha errada (não revela quais e-mails existem).
     if usuario is None or not isinstance(senha, str) or not check_password_hash(usuario["senha_hash"], senha):
         return erro("E-mail ou senha incorretos.", 401)
@@ -191,13 +175,13 @@ def entrar():
     return jsonify(usuario_publico(usuario))
 
 
-@app.post("/api/logout")
+@api.post("/api/logout")
 def sair():
     session.clear()
     return jsonify({"ok": True})
 
 
-@app.put("/api/perfil")
+@api.put("/api/perfil")
 @login_obrigatorio
 def atualizar_perfil(usuario):
     d = corpo_json()
@@ -211,7 +195,7 @@ def atualizar_perfil(usuario):
     except ValueError as e:
         return erro(str(e), 400)
     try:
-        atualizado = repositorio.atualizar_perfil(usuario["id"], nome, email, bio, senha_hash)
+        atualizado = banco.atualizar_perfil(usuario["id"], nome, email, bio, senha_hash)
     except EmailJaCadastrado:
         return erro("Este e-mail já está em uso.", 409)
     if atualizado is None:
@@ -222,10 +206,10 @@ def atualizar_perfil(usuario):
     return jsonify({"nome": atualizado["nome"], "email": atualizado["email"], "bio": atualizado["bio"]})
 
 
-@app.delete("/api/conta")
+@api.delete("/api/conta")
 @login_obrigatorio
 def apagar_conta(usuario):
-    repositorio.apagar_usuario(usuario["id"])
+    banco.apagar_usuario(usuario["id"])
     session.clear()
     return jsonify({"ok": True})
 
@@ -305,7 +289,7 @@ def validar_foto(valor):
     return valor
 
 
-@app.put("/api/dados")
+@api.put("/api/dados")
 @login_obrigatorio
 def salvar_dados(usuario):
     d = corpo_json()
@@ -320,7 +304,7 @@ def salvar_dados(usuario):
         }
     except ValueError as e:
         return erro(str(e), 400)
-    if not repositorio.salvar_dados(usuario["id"], dados):
+    if not banco.salvar_dados(usuario["id"], dados):
         session.clear()
         return erro("Conta não encontrada.", 401)
     return jsonify({"ok": True})
@@ -332,7 +316,7 @@ def salvar_dados(usuario):
 ATRIBUTOS_ITUNES = {"artistTerm", "songTerm", "albumTerm"}
 
 
-@app.get("/api/itunes")
+@api.get("/api/itunes")
 def itunes():
     termo = (request.args.get("term") or "").strip()
     if not termo or len(termo) > 200:
@@ -388,7 +372,7 @@ def ids_youtube(consulta):
                 adicionar((item.get("id") or {}).get("videoId"))
         except (requests.RequestException, ValueError) as e:
             # Não registra a exceção inteira: a mensagem do requests inclui a URL (com a chave).
-            app.logger.warning("YouTube Data API indisponível: %s", type(e).__name__)
+            current_app.logger.warning("YouTube Data API indisponível: %s", type(e).__name__)
         if ids:
             return ids[:3]
 
@@ -405,7 +389,7 @@ def ids_youtube(consulta):
     return ids[:3]
 
 
-@app.get("/api/video")
+@api.get("/api/video")
 def video():
     consulta = (request.args.get("q") or "").strip()
     if not consulta or len(consulta) > 200:
@@ -421,7 +405,7 @@ def https_ou_vazio(url):
     return url if isinstance(url, str) and re.fullmatch(r"https://[^\s\"')]+", url) else ""
 
 
-@app.get("/api/banda/<nome>")
+@api.get("/api/banda/<nome>")
 def banda(nome):
     nome = nome.strip()
     if not nome or len(nome) > 100:
@@ -463,7 +447,7 @@ def banda(nome):
 # ---------------------------------------------------------------------
 # Visualizações de faixas
 # ---------------------------------------------------------------------
-@app.post("/api/visualizacao")
+@api.post("/api/visualizacao")
 def registrar_visualizacao():
     """Incrementa a contagem de visualizações de uma faixa.
     Corpo JSON: { t: título, a: artista, c: capa (opcional), u: url_prévia (opcional) }
@@ -475,19 +459,15 @@ def registrar_visualizacao():
         return erro("Título e artista são obrigatórios.", 400)
     capa = str(d.get("c") or "").strip()[:600]
     url = str(d.get("u") or "").strip()[:600]
-    total = repositorio.incrementar_visualizacao(titulo, artista, capa, url)
+    total = banco.incrementar_visualizacao(titulo, artista, capa, url)
     return jsonify({"ok": True, "visualizacoes": total})
 
 
-@app.get("/api/mais-escutadas")
+@api.get("/api/mais-escutadas")
 def mais_escutadas():
     """Retorna o top de músicas mais visualizadas.
     Parâmetro opcional: limit (1–50, padrão 10).
     """
     limite = min(max(request.args.get("limit", default=10, type=int), 1), 50)
-    lista = repositorio.listar_mais_visualizadas(limite)
+    lista = banco.listar_mais_visualizadas(limite)
     return jsonify(lista)
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
